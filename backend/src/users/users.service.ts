@@ -8,6 +8,7 @@ import { hash } from 'bcrypt';
 import { PrismaService } from '../prisma/prisma.service';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UserResponseDto } from './dto/user-response.dto';
+import { normalizeEmail } from './users.utils';
 
 type CreateUserInput = {
   email: string;
@@ -21,7 +22,7 @@ export class UsersService {
 
   async findByEmail(email: string) {
     return this.prisma.user.findUnique({
-      where: { email },
+      where: { email: normalizeEmail(email) },
     });
   }
 
@@ -34,7 +35,7 @@ export class UsersService {
   async create(input: CreateUserInput) {
     return this.prisma.user.create({
       data: {
-        email: input.email,
+        email: normalizeEmail(input.email),
         name: input.name,
         passwordHash: input.passwordHash,
       },
@@ -72,7 +73,7 @@ export class UsersService {
     }
 
     if (updateUserDto.email) {
-      const normalizedEmail = updateUserDto.email.toLowerCase();
+      const normalizedEmail = normalizeEmail(updateUserDto.email);
       const userWithEmail = await this.findByEmail(normalizedEmail);
 
       if (userWithEmail && userWithEmail.id !== userId) {
@@ -83,7 +84,7 @@ export class UsersService {
     const data: Prisma.UserUpdateInput = {};
 
     if (typeof updateUserDto.email !== 'undefined') {
-      data.email = updateUserDto.email.toLowerCase();
+      data.email = normalizeEmail(updateUserDto.email);
     }
 
     if (typeof updateUserDto.name !== 'undefined') {
