@@ -7,13 +7,17 @@ ENV PATH="$PNPM_HOME:$PATH"
 
 RUN corepack enable
 
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends openssl \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY package.json pnpm-lock.yaml ./
 
 RUN corepack prepare pnpm@10.14.0 --activate \
     && pnpm install --frozen-lockfile
 
 COPY . .
 
-EXPOSE 3000
+EXPOSE 4000
 
-CMD ["pnpm", "dev", "--hostname", "0.0.0.0", "--port", "3000"]
+CMD ["pnpm", "start:docker"]
