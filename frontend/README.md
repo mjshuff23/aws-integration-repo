@@ -12,7 +12,7 @@ The frontend is intentionally small, which makes it a good place to learn how Ne
 - `features`: Product-oriented UI and state ownership, grouped by domain instead of by framework primitive.
 - `lib`: Lower-level helpers used across features.
 - `types`: Shared frontend-only or frontend-facing data shapes.
-- `public`: Static assets served directly by Next.js. This folder is currently empty.
+- `public`: Static assets served directly by Next.js, including generated infrastructure diagrams.
 - `next.config.ts`: Frontend-wide Next.js options. This repo enables the React Compiler here.
 - `package.json`: Frontend scripts and dependencies.
 
@@ -67,7 +67,9 @@ That directness matters when you reason about bugs:
 ## Important Files
 
 - [`app/page.tsx`](./app/page.tsx): Route entrypoint for the home page.
+- [`app/architecture/page.tsx`](./app/architecture/page.tsx): Route entrypoint for the infrastructure view.
 - [`app/layout.tsx`](./app/layout.tsx): Global HTML shell and metadata.
+- [`features/architecture/components/architecture-page.tsx`](./features/architecture/components/architecture-page.tsx): Human-readable context around the generated Terraform diagram.
 - [`features/home/components/home-page.tsx`](./features/home/components/home-page.tsx): Top-level page composition.
 - [`features/session/hooks/use-user-session.ts`](./features/session/hooks/use-user-session.ts): Central interactive state and request flow.
 - [`lib/api/api-request.ts`](./lib/api/api-request.ts): Shared fetch wrapper and error normalization.

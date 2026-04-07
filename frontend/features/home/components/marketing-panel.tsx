@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { API_BASE_URL } from "@/lib/env/api-base-url";
 
 export function MarketingPanel() {
@@ -16,6 +17,22 @@ export function MarketingPanel() {
             Prisma and PostgreSQL, and ready for local Docker runs or an ECS +
             RDS deployment behind a single `/api` origin.
           </p>
+          <div className="flex flex-wrap gap-3">
+            <Link
+              className="inline-flex items-center rounded-full bg-slate-950 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-slate-800"
+              href="/architecture"
+            >
+              View architecture
+            </Link>
+            <a
+              className="inline-flex items-center rounded-full border border-slate-200 bg-white px-5 py-2.5 text-sm font-medium text-slate-700 transition hover:border-slate-300 hover:text-slate-900"
+              href={`${API_BASE_URL}/docs`}
+              rel="noreferrer"
+              target="_blank"
+            >
+              Open API docs
+            </a>
+          </div>
         </div>
       </div>
 

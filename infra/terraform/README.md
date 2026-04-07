@@ -159,6 +159,16 @@ Or use the safer wrapper from [`../../scripts/README.md`](../../scripts/README.m
 ./scripts/infra.sh up
 ```
 
+To regenerate the frontend architecture view from the current Terraform stack:
+
+```bash
+./scripts/infra.sh diagram
+```
+
+That command publishes a generated SVG plus the icon assets it references under
+`frontend/public/architecture/`, which makes the result browsable at the
+frontend `/architecture` route.
+
 ## Key Assumptions
 
 - Region defaults to `us-east-1`.
@@ -184,6 +194,7 @@ Or use the safer wrapper from [`../../scripts/README.md`](../../scripts/README.m
 1. Start in `routing.tf`.
 2. Confirm health-check paths still match app behavior.
 3. Confirm frontend and backend task definitions still expose the ports and env values the routing layer assumes.
+4. Regenerate the architecture page asset so the published diagram stays current.
 
 ### Change deploy automation assumptions
 

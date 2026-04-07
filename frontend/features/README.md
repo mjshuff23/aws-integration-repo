@@ -7,6 +7,7 @@ This folder groups frontend code by product domain. It is the main answer to “
 ## What Lives Here
 
 - `home`: Page composition and the marketing-plus-access layout.
+- `architecture`: Static infrastructure view for the generated Terraform diagram.
 - `auth`: Signup and login UI.
 - `account`: Authenticated account management UI.
 - `session`: Session state, form state, and user-facing auth/profile workflow logic.
@@ -39,6 +40,7 @@ app/page.tsx
 
 - [`../README.md`](../README.md)
 - [`home/README.md`](./home/README.md)
+- [`architecture/README.md`](./architecture/README.md)
 - [`auth/README.md`](./auth/README.md)
 - [`account/README.md`](./account/README.md)
 - [`session/README.md`](./session/README.md)

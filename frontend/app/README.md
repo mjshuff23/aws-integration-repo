@@ -8,6 +8,7 @@ This folder is the Next.js App Router entry surface. It defines the route shell 
 
 - `layout.tsx`: Global HTML structure, fonts, and metadata.
 - `page.tsx`: The `/` route entrypoint.
+- `architecture/page.tsx`: The `/architecture` route entrypoint.
 - `globals.css`: Tailwind import plus small global theme values.
 
 ## How It Fits Into The System

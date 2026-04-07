@@ -75,12 +75,14 @@ Browser
 
 - [`docker-compose.yml`](./docker-compose.yml): Local stack entrypoint.
 - [`frontend/app/page.tsx`](./frontend/app/page.tsx): App Router entry page that mounts the home experience.
+- [`frontend/app/architecture/page.tsx`](./frontend/app/architecture/page.tsx): Frontend route for the generated Terraform architecture view.
 - [`frontend/features/session/hooks/use-user-session.ts`](./frontend/features/session/hooks/use-user-session.ts): Main frontend state machine for auth and profile updates.
 - [`backend/src/configure-app.ts`](./backend/src/configure-app.ts): Global Nest configuration for CORS, validation, API prefix, and Swagger.
 - [`backend/src/auth/auth.service.ts`](./backend/src/auth/auth.service.ts): Signup/login/session-cookie behavior.
 - [`backend/src/users/users.service.ts`](./backend/src/users/users.service.ts): User persistence and sanitization logic.
 - [`backend/prisma/schema.prisma`](./backend/prisma/schema.prisma): Prisma schema and database model source of truth.
 - [`infra/terraform`](./infra/terraform): AWS infrastructure root module.
+- [`frontend/public/architecture/terraform-inframap.svg`](./frontend/public/architecture/terraform-inframap.svg): Generated AWS topology diagram derived from Terraform state.
 - [`.github/workflows/deploy.yml`](./.github/workflows/deploy.yml): Container build and ECS deployment workflow.
 
 ## Concepts To Know
@@ -138,6 +140,7 @@ Browser
 1. Decide whether the change belongs in the existing Terraform root module.
 2. Place resources in the subsystem file that best matches the concern.
 3. Update outputs, workflow assumptions, and READMEs if the deploy flow or runtime path changes.
+4. Run `./scripts/infra.sh diagram` if the published architecture view should reflect the change.
 
 ## Local Development
 

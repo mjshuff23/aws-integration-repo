@@ -32,6 +32,7 @@ Then each command delegates into Terraform:
 - `plan`: snapshot state, then `terraform plan -var-file=...`
 - `up`: snapshot state, `terraform apply`, snapshot again
 - `down`: snapshot state, `terraform destroy`, snapshot again
+- `diagram`: pull current state when available, generate an AWS topology SVG with Dockerized Inframap, and publish the required icon assets for the frontend
 - `outputs`: show outputs
 - `status`: show tracked resources plus outputs
 - `backup-state`: create a manual snapshot
@@ -62,6 +63,7 @@ A wrapper script is not a second infrastructure system. It is just a repeatable 
 - Add a new helper only if it solves a repo-wide operational problem.
 - Keep script output plain and readable because these scripts are part teaching tool, part safety tool.
 - If you change Terraform directory structure or expected variable files, update this script and its README together.
+- If you change the published architecture route or asset location, update the `diagram` defaults together with the frontend route that serves them.
 
 ## Gotchas
 
