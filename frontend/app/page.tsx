@@ -22,8 +22,20 @@ type ProfileFormState = {
   password: string;
 };
 
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") ?? "http://localhost:4000";
+function resolveApiBaseUrl() {
+  const envValue = process.env.NEXT_PUBLIC_API_URL?.trim();
+  const fallback =
+    process.env.NODE_ENV === "production"
+      ? "/api"
+      : "http://localhost:4000/api";
+  const normalizedBaseUrl = (envValue || fallback).replace(/\/$/, "");
+
+  return normalizedBaseUrl.endsWith("/api")
+    ? normalizedBaseUrl
+    : `${normalizedBaseUrl}/api`;
+}
+
+const API_BASE_URL = resolveApiBaseUrl();
 
 function getErrorMessage(error: unknown) {
   if (error instanceof Error) {
@@ -272,8 +284,8 @@ export default function Home() {
               </h1>
               <p className="max-w-2xl text-lg leading-8 text-slate-600">
                 This page is wired directly to the Nest API over cookies, backed
-                by Prisma and PostgreSQL, and ready for local Docker development
-                or production env overrides.
+                by Prisma and PostgreSQL, and ready for local Docker runs or an
+                ECS + RDS deployment behind a single `/api` origin.
               </p>
             </div>
           </div>
@@ -312,8 +324,8 @@ export default function Home() {
               </p>
               <p className="mt-3 text-2xl font-semibold">PostgreSQL 18.3</p>
               <p className="mt-2 text-sm text-slate-600">
-                Compose-managed database with persistent storage and Prisma
-                migrations.
+                Local Compose in development, Amazon RDS in production, both
+                accessed through the same Prisma schema and migrations.
               </p>
             </div>
           </div>
@@ -426,14 +438,14 @@ export default function Home() {
 
                 <div className="flex flex-col gap-3 sm:flex-row">
                   <button
-                    className="rounded-full bg-cyan-400 px-5 py-3 font-medium text-slate-950 transition hover:bg-cyan-300 disabled:cursor-not-allowed disabled:opacity-60"
+                    className="rounded-full bg-cyan-400 px-5 py-3 my-5 font-medium text-slate-950 transition hover:bg-cyan-300 disabled:cursor-not-allowed disabled:opacity-60"
                     disabled={isBusy}
                     type="submit"
                   >
                     {isBusy ? "Saving..." : "Save profile"}
                   </button>
                   <button
-                    className="rounded-full border border-white/15 px-5 py-3 font-medium text-white transition hover:border-white/30 hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-60"
+                    className="rounded-full border border-white/15 px-5 py-3 my-5 font-medium text-white transition hover:border-white/30 hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-60"
                     disabled={isBusy}
                     onClick={handleLogout}
                     type="button"
@@ -441,7 +453,7 @@ export default function Home() {
                     Logout
                   </button>
                   <button
-                    className="rounded-full border border-rose-400/30 px-5 py-3 font-medium text-rose-200 transition hover:bg-rose-500/10 disabled:cursor-not-allowed disabled:opacity-60"
+                    className="rounded-full border border-rose-400/30 px-5 py-3 my-5 font-medium text-rose-200 transition hover:bg-rose-500/10 disabled:cursor-not-allowed disabled:opacity-60"
                     disabled={isBusy}
                     onClick={handleDeleteAccount}
                     type="button"
