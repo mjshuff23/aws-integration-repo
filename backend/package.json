@@ -12,7 +12,7 @@
     "start:dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/main",
-    "start:docker": "pnpm prisma:generate && pnpm prisma:migrate:deploy && pnpm start:dev",
+    "start:docker": "pnpm prisma:generate && pnpm prisma:migrate:deploy && pnpm start:prod",
     "lint": "eslint \"{src,test}/**/*.ts\"",
     "test": "jest --passWithNoTests",
     "test:watch": "jest --watch",

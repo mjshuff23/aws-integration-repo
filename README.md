@@ -1,45 +1,48 @@
 # aws-integration-repo
 
-Current state:
+This repo now supports two workflows:
 
-- `frontend/`: Next.js 16 app with signup, login, logout, profile update, and delete-account UI
-- `backend/`: NestJS 11 API with Swagger, Prisma, JWT cookie auth, and self-service user CRUD
-- `db`: PostgreSQL 18.3 via Docker Compose
+- Local development and smoke testing with Docker Compose or per-service `pnpm` commands
+- AWS deployment in `us-east-1` with Terraform, ECS Fargate, RDS PostgreSQL, CloudFront, and GitHub Actions
 
 ## Stack
 
-- Frontend: Next.js, React, Tailwind CSS
-- Backend: NestJS, Swagger, Prisma, bcrypt, JWT-in-cookie auth
-- Database: PostgreSQL 18.3
+- Frontend: Next.js 16, React 19, Tailwind CSS
+- Backend: NestJS 11, Swagger, Prisma, JWT-in-cookie auth
+- Database: PostgreSQL 18
 - Local orchestration: Docker Compose
-
-Note:
-
-- Prisma is currently pinned to `6.18.0` in the backend for stable NestJS integration. It is not using Prisma 7.
-
-## What Works
-
-- `POST /auth/signup`
-- `POST /auth/login`
-- `POST /auth/logout`
-- `GET /auth/me`
-- `GET /users/me`
-- `PATCH /users/me`
-- `DELETE /users/me`
-- Swagger UI at `http://localhost:4000/docs`
-- Frontend auth/profile flow at `http://localhost:3000`
+- AWS target: CloudFront, ALB, ECS Fargate, RDS PostgreSQL, ECR, Secrets Manager, CloudWatch Logs
+- CI/CD: GitHub Actions with AWS OIDC
 
 ## Repo Layout
 
 ```text
 .
+├── .github/workflows
 ├── backend
 │   ├── prisma
-│   └── src
+│   ├── src
+│   └── test
 ├── frontend
 │   └── app
+├── infra
+│   └── terraform
 └── docker-compose.yml
 ```
+
+## API Surface
+
+All API routes are now under `/api`.
+
+- `GET /api/health`
+- `POST /api/auth/signup`
+- `POST /api/auth/login`
+- `POST /api/auth/logout`
+- `GET /api/auth/me`
+- `GET /api/users/me`
+- `PATCH /api/users/me`
+- `DELETE /api/users/me`
+- Swagger UI at `http://localhost:4000/api/docs`
 
 ## Environment Setup
 
@@ -51,7 +54,7 @@ cp backend/.env.example backend/.env
 cp frontend/.env.example frontend/.env
 ```
 
-Current root `.env` variables:
+Root `.env` variables:
 
 ```env
 FRONTEND_PORT=3000
@@ -62,7 +65,7 @@ POSTGRES_USER=postgres
 POSTGRES_PASSWORD=postgres
 ```
 
-Current backend `.env` variables:
+Backend `.env` variables:
 
 ```env
 PORT=4000
@@ -74,21 +77,22 @@ FRONTEND_URL=http://localhost:3000
 NODE_ENV=development
 ```
 
-Current frontend `.env` variables:
+Frontend `.env` variables:
 
 ```env
-NEXT_PUBLIC_API_URL=http://localhost:4000
+NEXT_PUBLIC_API_URL=http://localhost:4000/api
 ```
 
-For production or cloud deployment, override:
+For AWS production, the backend uses:
 
-- `DATABASE_URL` to point at the real database
-- `FRONTEND_URL` to the deployed frontend origin
-- `NEXT_PUBLIC_API_URL` to the deployed API origin
-- `JWT_SECRET` with a real secret
-- `NODE_ENV=production` on the backend to enable secure cookies
+- `DATABASE_URL` from Secrets Manager
+- `JWT_SECRET` from Secrets Manager
+- `FRONTEND_URL=https://<cloudfront-domain>`
+- `NODE_ENV=production`
 
-## Running Locally With Docker
+The frontend production image is built with `NEXT_PUBLIC_API_URL=/api`.
+
+## Local Docker Compose
 
 Start the full stack:
 
@@ -114,14 +118,13 @@ Stop and remove containers plus volumes:
 docker compose down -v
 ```
 
-The compose stack does the following:
+The Compose stack now runs production-style containers locally:
 
-- starts PostgreSQL 18.3 with a healthcheck
-- waits for the database before starting the backend
-- runs Prisma generate and Prisma migrate deploy before the Nest dev server starts
-- starts the frontend against `NEXT_PUBLIC_API_URL`
+- PostgreSQL 18.3 with a healthcheck
+- Backend image that applies Prisma migrations and starts Nest in production mode
+- Frontend image built against `http://localhost:4000/api`
 
-## Running Services Individually
+## Local Per-Service Development
 
 Frontend:
 
@@ -140,46 +143,126 @@ pnpm prisma:generate
 pnpm start:dev
 ```
 
-If you are running the backend outside Docker, `backend/.env` must use a database host reachable from your machine instead of the Compose hostname `db`.
+If you run the backend outside Docker, set `backend/.env` to a database host your machine can reach.
 
-## API Notes
+## Local Verification
 
-Auth responses return a sanitized user object:
+These commands should remain the baseline checks:
 
-```json
-{
-  "id": "uuid",
-  "email": "user@example.com",
-  "name": "User Name",
-  "createdAt": "2026-04-07T01:08:15.785Z",
-  "updatedAt": "2026-04-07T01:08:24.292Z"
-}
+```bash
+cd backend && pnpm lint
+cd backend && pnpm build
+cd frontend && pnpm lint
+cd frontend && pnpm build
+docker compose config
 ```
 
-The API never returns `passwordHash`.
+Backend e2e tests now hit a real PostgreSQL database. For a local run:
 
-Authentication is handled with:
+```bash
+docker compose up -d db
+cd backend
+pnpm prisma:migrate:deploy
+pnpm test:e2e
+```
 
-- JWT stored in an HttpOnly cookie
-- `SameSite=Lax`
-- `Secure=true` only when `NODE_ENV=production`
+## AWS Infrastructure
 
-## Verification Status
+Terraform lives in [`infra/terraform`](./infra/terraform) and provisions:
 
-These checks have already passed locally:
+- 1 VPC with 2 public subnets and 2 private DB subnets
+- 1 public ALB with `/api` routed to the backend and all other paths routed to the frontend
+- 1 CloudFront distribution in front of the ALB using the default `*.cloudfront.net` domain
+- 1 ECS cluster with 2 Fargate services
+- 2 ECR repositories
+- 1 single-AZ RDS PostgreSQL 18 instance
+- Secrets Manager secrets for `DATABASE_URL` and `JWT_SECRET`
+- CloudWatch log groups for both services
+- 1 GitHub OIDC IAM role for deployments
 
-- `cd backend && pnpm build`
-- `cd backend && pnpm lint`
-- `cd backend && pnpm test:e2e`
-- `cd frontend && pnpm build`
-- `cd frontend && pnpm lint`
-- `docker compose config`
-- `docker compose up --build -d`
-- live smoke test for signup, auth me, profile update, delete account, frontend page load, and Swagger page load
+Initialize Terraform:
 
-## Next Useful Steps
+```bash
+cd infra/terraform
+cp terraform.tfvars.example terraform.tfvars
+```
 
-- add frontend integration tests or Playwright coverage
-- add backend unit tests around auth and user services
-- add production deployment docs for AWS
-- add refresh-token or session-rotation support if auth needs to harden beyond the current basic flow
+Set `github_repository` in `terraform.tfvars` to your actual `OWNER/REPO`, then run:
+
+```bash
+terraform init
+terraform plan
+terraform apply
+```
+
+Important outputs:
+
+- `cloudfront_domain_name`
+- `github_actions_deploy_role_arn`
+- `frontend_ecr_repository_url`
+- `backend_ecr_repository_url`
+
+Destroy the learning stack when you are done:
+
+```bash
+terraform destroy
+```
+
+## GitHub Actions
+
+Two workflows are included:
+
+- `.github/workflows/ci.yml`
+- `.github/workflows/deploy.yml`
+
+### CI
+
+`ci.yml` runs on pull requests and pushes to `main`.
+
+- Frontend: install, lint, build
+- Backend: install, generate Prisma client, apply migrations, lint, build, e2e against PostgreSQL 18.3
+
+### Deployment
+
+`deploy.yml` runs on pushes to `main` and manual dispatch.
+
+Before it can deploy, set these GitHub repository variables:
+
+- `AWS_DEPLOY_ROLE_ARN`
+
+Optional overrides if you change Terraform defaults:
+
+- `AWS_REGION`
+- `AWS_PROJECT_NAME`
+- `AWS_ENVIRONMENT`
+
+The deploy workflow:
+
+1. Assumes the AWS role via GitHub OIDC
+2. Builds and pushes both images to ECR
+3. Registers new ECS task definition revisions
+4. Runs `pnpm prisma:migrate:deploy` as a one-off Fargate task
+5. Deploys the backend service and waits for stability
+6. Deploys the frontend service and waits for stability
+
+## First AWS Rollout Checklist
+
+1. Apply Terraform in `infra/terraform`.
+2. Copy the Terraform output `github_actions_deploy_role_arn` into the GitHub repository variable `AWS_DEPLOY_ROLE_ARN`.
+3. Push to `main` or trigger the deploy workflow manually.
+4. Open `https://<cloudfront_domain_name>`.
+5. Verify:
+   - frontend page load
+   - signup
+   - login
+   - `/api/auth/me`
+   - profile update
+   - logout
+   - delete account
+   - `/api/docs`
+
+## Notes
+
+- This is intentionally a lean learning stack, not a hardened production platform.
+- CloudFront handles viewer HTTPS, while the origin hop to the ALB is HTTP in phase 1 because there is no custom domain and no ACM certificate on the ALB.
+- ECS services are created with `latest` image references by Terraform so the first `terraform apply` can finish before the first GitHub deployment pushes the real images.
