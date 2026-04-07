@@ -15,7 +15,7 @@ import {
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import type { Response } from 'express';
-import { buildAuthCookieOptions } from '../auth/auth.utils';
+import { clearAuthCookie } from '../auth/auth.utils';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import type { JwtUser } from '../auth/types/jwt-user.type';
@@ -55,14 +55,7 @@ export class UsersController {
     @Res({ passthrough: true }) response: Response,
   ) {
     const deletedUser = await this.usersService.deleteCurrentUser(user.userId);
-    const cookieName = this.configService.get<string>(
-      'COOKIE_NAME',
-      'auth_token',
-    );
-    response.clearCookie(
-      cookieName,
-      buildAuthCookieOptions(this.configService),
-    );
+    clearAuthCookie(response, this.configService);
     return deletedUser;
   }
 }

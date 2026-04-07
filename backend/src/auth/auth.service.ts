@@ -12,7 +12,7 @@ import type { UserResponseDto } from '../users/dto/user-response.dto';
 import { LoginDto } from './dto/login.dto';
 import { SignupDto } from './dto/signup.dto';
 import type { JwtUser } from './types/jwt-user.type';
-import { buildAuthCookieOptions } from './auth.utils';
+import { clearAuthCookie, setAuthCookie } from './auth.utils';
 
 @Injectable()
 export class AuthService {
@@ -23,8 +23,7 @@ export class AuthService {
   ) {}
 
   async signup(signupDto: SignupDto): Promise<UserResponseDto> {
-    const normalizedEmail = signupDto.email.toLowerCase();
-    const existingUser = await this.usersService.findByEmail(normalizedEmail);
+    const existingUser = await this.usersService.findByEmail(signupDto.email);
 
     if (existingUser) {
       throw new ConflictException('A user with that email already exists.');
@@ -33,7 +32,7 @@ export class AuthService {
     const passwordHash = await hash(signupDto.password, 12);
 
     const user = await this.usersService.create({
-      email: normalizedEmail,
+      email: signupDto.email,
       name: signupDto.name,
       passwordHash,
     });
@@ -42,8 +41,7 @@ export class AuthService {
   }
 
   async login(loginDto: LoginDto): Promise<UserResponseDto> {
-    const normalizedEmail = loginDto.email.toLowerCase();
-    const user = await this.usersService.findByEmail(normalizedEmail);
+    const user = await this.usersService.findByEmail(loginDto.email);
 
     if (!user) {
       throw new UnauthorizedException('Invalid email or password.');
@@ -69,31 +67,15 @@ export class AuthService {
   }
 
   async attachAuthCookie(response: Response, jwtUser: JwtUser) {
-    const cookieName = this.configService.get<string>(
-      'COOKIE_NAME',
-      'auth_token',
-    );
     const token = await this.jwtService.signAsync({
       sub: jwtUser.userId,
       email: jwtUser.email,
     });
 
-    response.cookie(
-      cookieName,
-      token,
-      buildAuthCookieOptions(this.configService),
-    );
+    setAuthCookie(response, this.configService, token);
   }
 
   clearAuthCookie(response: Response) {
-    const cookieName = this.configService.get<string>(
-      'COOKIE_NAME',
-      'auth_token',
-    );
-
-    response.clearCookie(
-      cookieName,
-      buildAuthCookieOptions(this.configService),
-    );
+    clearAuthCookie(response, this.configService);
   }
 }
