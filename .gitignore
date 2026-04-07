@@ -13,6 +13,7 @@ infra/terraform/.terraform
 infra/terraform/*.tfstate
 infra/terraform/*.tfstate.*
 infra/terraform/*.tfplan
+infra/terraform/state-backups/
 
 !.env.example
 !backend/.env.example

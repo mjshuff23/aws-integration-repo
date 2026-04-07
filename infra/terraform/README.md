@@ -32,6 +32,12 @@ terraform plan
 terraform apply
 ```
 
+Or use the repo wrapper:
+
+```bash
+./scripts/infra.sh up
+```
+
 ## Key Assumptions
 
 - Region defaults to `us-east-1`
@@ -57,3 +63,31 @@ Destroy the stack when you are done learning:
 ```bash
 terraform destroy
 ```
+
+Or with the wrapper:
+
+```bash
+./scripts/infra.sh down
+```
+
+## Spinning The Stack Up And Down
+
+`terraform destroy` does not break Terraform's ability to recreate the stack.
+It updates the active state so Terraform knows the managed resources are gone.
+
+To make this safer in local-state mode, the repo includes [`scripts/infra.sh`](../../scripts/infra.sh):
+
+- `./scripts/infra.sh up`
+- `./scripts/infra.sh down`
+- `./scripts/infra.sh plan`
+- `./scripts/infra.sh status`
+- `./scripts/infra.sh outputs`
+
+Before `plan`, `up`, and `down`, the script saves a timestamped backup of the
+current state in `infra/terraform/state-backups/`.
+
+Important:
+
+- A state backup is for inspection or recovery, not for normal restore after a successful destroy.
+- After a successful destroy, the current state being empty is correct and expected.
+- Running `./scripts/infra.sh up` after `down` will recreate the infrastructure from config and `terraform.tfvars`.
