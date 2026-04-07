@@ -27,6 +27,12 @@ variable "github_branch" {
   default     = "main"
 }
 
+variable "github_environment_name" {
+  description = "GitHub Actions environment name used by the deploy workflow OIDC subject."
+  type        = string
+  default     = "production"
+}
+
 variable "frontend_cpu" {
   description = "CPU units for the frontend ECS task."
   type        = number
